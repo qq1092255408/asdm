@@ -18,6 +18,14 @@ print('''
 # Create 'output'
 if not os.path.exists('output'):
     os.mkdir('output')
+# Download 'Scratch Setup.exe' for Windows
+r = requests.get('https://downloads.scratch.mit.edu/microbit/scratch-microbit.hex.zip', stream=True)
+
+with open(r'./output/scratch-microbit.hex.zip', "wb") as f:
+    for chunk in r.iter_content(chunk_size=512):
+        f.write(chunk)
+
+print('Download scratch-desktop for windows done.')
 
 # Download 'Scratch Setup.exe' for Windows
 r = requests.get('https://downloads.scratch.mit.edu/desktop/Scratch%20Setup.exe', stream=True)
