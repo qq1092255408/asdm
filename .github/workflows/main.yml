@@ -1,39 +1,52 @@
 name: Mirror and push
 
-on: 
-  workflow_dispatch:
+on:
+  workflow_dispatch:  # 手动触发
   schedule:
-    - cron:  '45 11 * * 3'
+    # UTC 周三 11:45；北京时间是 19:45
+    - cron: '45 11 * * 3'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - name: checkout actions
-      uses: actions/checkout@v1
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-    - name: Set up Python 3.11.18
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.11.18
-     
-    - name: Install requests
-      run: pip install requests
- 
-    - name: Download
-      run: |
-        python download.py
-      
-    - name: Releases mirror
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "output/scratch-microbit.hex.zip,output/scratch-win.exe,output/scratch-mac.dmg"
-        token: ${{ secrets.gcyun }}
-        body: |
-          { "describe_zh" : "这些文件属于 scratch.mit.edu/download 而不属于 ASDM，ASDM 所做的只是镜像这些文件。",
-            "describe_en" : "( These files are from scratch.mit.edu/download and not belongs to asdm, asdm to do are just mirror these files. )",
-            "scratch_version": "${{ env.scratch_version }}" }
-        
-        tag: ${{ github.run_id }}
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run download script
+        run: python download.py
+
+      # ========== 这里需要你在 download.py 里输出 scratch_version，两种方案选一个 ==========
+      # 方案A：python脚本输出到GITHUB_ENV（推荐）
+      # 在 download.py 末尾加：
+      # with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
+      #     f.write(f"scratch_version={version_str}\n")
+      # 然后下面就能直接用 ${{ env.scratch_version }}
+
+      - name: Release mirror assets
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "output/scratch-microbit.hex.zip,output/scratch-win.exe,output/scratch-mac.dmg"
+          token: ${{ secrets.gcyun }}
+          tag: scratch-mirror-${{ github.run_id }}
+          name: Scratch Mirror ${{ env.scratch_version || github.run_id }}
+          body: |
+            **中文说明**
+            这些文件来自 scratch.mit.edu/download，ASDM 仅做镜像同步，文件归属原站点。
+
+            **English**
+            These files are from scratch.mit.edu/download. ASDM only mirrors them.
+            Scratch Version: ${{ env.scratch_version }}
+          draft: false
+          prerelease: false
+          allowUpdates: false
