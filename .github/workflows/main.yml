@@ -37,7 +37,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "output/scratch-microbit.hex.zip,output/scratch-win.exe,output/scratch-mac.dmg"
-          token: ${{ secrets.gcyun }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag: scratch-mirror-${{ github.run_id }}
           name: Scratch Mirror ${{ env.scratch_version || github.run_id }}
           body: |
